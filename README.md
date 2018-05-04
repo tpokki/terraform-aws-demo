@@ -1,5 +1,5 @@
-Simple introcution to using terraform in AWS
-============================================
+Simple introduction to using terraform in AWS
+=============================================
 
 Disclaimer
 ----------
@@ -7,14 +7,14 @@ Disclaimer
 TL;DR: Executing the commands in this demo may cost you money !!
 
 
-Using this demo requires Amazon Web Services account, and therefore the commands and examples may cause you to run billable instances in Amazon (especially if you are not entitled to free tier). Most likely the cost wont be much, even if you are not entited to free tier. Just remember to destroy the machines you've created after you've done. 
+Using this demo requires Amazon Web Services account, and therefore the commands and examples may cause you to run billable instances in Amazon (especially if you are not entitled to free tier). Most likely the cost wont be much, even if you are not entitled to free tier. Just remember to destroy the machines you've created after you've done. 
 
 This should go without saying; I cannot held responsible for any of the expenses that running this demo may cause to you or the AWS account owner you are using.
 
 About
 -----
 
-This is simple terraform demo that sets up following simple infrastucture into AWS EC2 cloud.
+This is simple terraform demo that sets up following simple infrastructure into AWS EC2 cloud.
 
 ```
         internet            
@@ -33,21 +33,21 @@ This is simple terraform demo that sets up following simple infrastucture into A
 ```
 
 That is, we create bastion host into own subnet with public ip address and possibility to login with ssh. 
-Inside the cloud network we create another subnet where were create three app servers. 
+Inside the cloud network we create another subnet, where we create three app servers. 
 
-This infrastucture can be extended to add other servers, such as database and web servers, to make it more practical. 
+This infrastructure can be extended to add other servers, such as database and web servers, to make it more practical. 
 
 Usage
 -----
 
-In this chapter we go quickly thru the commands to use this terraform-aws-demo to setup infrastructure into AWS.  
+In this chapter we go quickly through the commands to use this terraform-aws-demo to setup infrastructure into AWS.  
 
-# Prerequisites
+### Prerequisites
 
 * You need AWS account, and credentials (access key, secret key) to create new resources in AWS EC2 cloud. 
 * You need to download terraform binary and place it in your PATH
 
-# Setup 
+### Setup 
 
 Use `setup-keys.sh` to create ssh keys and property files for aws credentials
 
@@ -64,7 +64,7 @@ Your public key has been saved in ./keys/aws-deployer.pub.
 
 As a result you should have ssh keys and credentials file in `keys/` directory. Keep them safe!
 
-# Initialize terraform
+### Initialize terraform
 
 Initialize terraform by downloading plugins.
 
@@ -73,7 +73,7 @@ $ cd terraform/
 $ terraform init
 ```
 
-# Create infrastucture
+### Create infrastructure
 
 First, you can preview the changes with `terraform plan`. If preferred, you can save your plan with `-out` option. 
 
@@ -87,9 +87,9 @@ Once you're happy with the plan, you can execute it. If you saved you plan, you 
 $ terraform apply aws-demo.plan
 ```
 
-# Connect to your infrastucture
+### Connect to your infrastructure
 
-You're ready to connect to your infrastucture. The RHEL Amazon Machine Image has `ec2-user` account that we can use to log in. Also, we use `terraform output` command to get the public image of the bastion host. 
+You're ready to connect to your infrastructure. The RHEL Amazon Machine Image has `ec2-user` account that we can use to log in. Also, we use `terraform output` command to get the public ip of the bastion host. 
 
 
 ```
@@ -97,7 +97,7 @@ $ cd ../
 $ ssh -i keys/aws-deployer -l ec2-user $(terraform output bastion_ip)
 ```
 
-# Destroy your infrastucture
+### Destroy your infrastructure
 
 Once you're done with playing with your AWS EC2 machines, you can destroy them with `terraform destroy`
 
@@ -106,14 +106,14 @@ $ cd terraform/
 $ terraform destroy
 ```
 
-Code walkthru  
--------------
+Code walkthrough
+----------------
 
-In this chapter we go thru the relevant parts of the terraform code.
+In this chapter we go through the relevant parts of the terraform code.
  
-# Variables
+### Variables
 
-The terraform plan can be parameterized with comand line `-var` options, or separate parameter files. By defaul terraform reads variables from `terraform.tfvars` and `*.auto.tfvars` files. 
+The terraform plan can be parameterized with command line `-var` options, or separate parameter files. By default terraform reads variables from `terraform.tfvars` and `*.auto.tfvars` files. 
 
 In this demo we have parametrized couple of things. Such as key names and files, AWS region and Amazon Machine Image properties (see `variables.auto.tfvars`).
 
@@ -123,7 +123,7 @@ The variables can be referred in terraform files with `var.` prefix, for example
 
 Note that `terraform` command reads always all `*.tf` files in the working directory.
 
-# Keys 
+### Keys 
 
 Typically you cannot access the hosts that you create unless you define key pair and define the public key to the created hosts. In this example we have automated that process as well by using the rsa key created with `setup-keys.sh`. 
 
@@ -134,7 +134,7 @@ resource "aws_key_pair" "deployer" {
 }
 ```
 
-# Amazon Machine Image
+### Amazon Machine Image
 
 Amazon machine images are identified by `ami id`. Easiest way is to hardcode the `ami id` directly in your script. However, in this demo we use `aws_ami` date source (named as "rhel75") to query amazon for image that matches to our criteria: 
 
@@ -159,7 +159,7 @@ Note that you can use `aws` commandline tool (https://aws.amazon.com/cli/) to qu
 
 With the data source defined, we can refer to the fetched `ami id` with `${data.aws_ami.rhel75.image_id}`. 
 
-# Virtual Private Cloud
+### Virtual Private Cloud
 
 We create own virtual private cloud (VPC) for all the hosts created in this demo. This is done simply by defining top level cidr block for our private cloud.
 
@@ -172,7 +172,7 @@ resource "aws_vpc" "main" {
 }
 ```
 
-# Subnets and routes
+### Subnets and routes
 
 Once we have defined the VPC, we can allocate subnets for our hosts. We define two subnets (dmz and app), and for dmz we instruct to allocate public ip addresses on launch. 
 
@@ -184,7 +184,7 @@ resource "aws_subnet" "dmz" {
 }
 ```
 
-Additionally we define gateway for internet connectivty, and define the necessary route for it.
+Additionally we define gateway for Internet connectivity, and define the necessary route for it.
 
 ```hcl
 resource "aws_internet_gateway" "internet" {
@@ -214,7 +214,7 @@ resource "aws_route_table_association" "dmz_internet" {
 }
 ```
 
-# Security groups / Firewall
+### Security groups / Firewall
 
 In order to access the hosts created in our subnets, we need to define security group and associate them to the each host. First we define the security group where we accept only incoming ssh from any host, and all outgoing traffic to any host. 
 
@@ -240,7 +240,7 @@ resource "aws_security_group" "allow_ssh" {
 }
 ```
 
-# Instances
+### Instances
 
 Finally we are ready to define the actual hosts. At this point we can refer to other resources that we have created so far, such as: 
 * amazon machine identifier
@@ -284,7 +284,7 @@ resource "aws_instance" "app" {
 }
 ```
 
-# Output, templates, provisioners
+### Output, templates, provisioners
 
 Finally, we can look what to provide the information about built infrastructure to next steps (e.g. ansible). In this example we create simple ansible inventory file by using `template_file` date source, and dummy `null_resource` resource to call the `local-exec` provisioner. 
 
