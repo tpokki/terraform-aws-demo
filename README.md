@@ -127,7 +127,7 @@ Note that `terraform` command reads always all `*.tf` files in the working direc
 
 Typically you cannot access the hosts that you create unless you define key pair and define the public key to the created hosts. In this example we have automated that process as well by using the rsa key created with `setup-keys.sh`. 
 
-```
+```hcl
 resource "aws_key_pair" "deployer" {
   key_name   = "${var.key_name}"
   public_key = "${file(var.key_file)}"
@@ -142,7 +142,7 @@ Amazon machine images are identified by `ami id`. Easiest way is to hardcode the
 * name match
 * most recent 
 
-```
+```hcl
 data "aws_ami" "rhel75" {
   most_recent = true
 
@@ -163,7 +163,7 @@ With the data source defined, we can refer to the fetched `ami id` with `${data.
 
 We create own virtual private cloud (VPC) for all the hosts created in this demo. This is done simply by defining top level cidr block for our private cloud.
 
-```
+```hcl
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
   tags {
@@ -176,7 +176,7 @@ resource "aws_vpc" "main" {
 
 Once we have defined the VPC, we can allocate subnets for our hosts. We define two subnets (dmz and app), and for dmz we instruct to allocate public ip addresses on launch. 
 
-```
+```hcl
 resource "aws_subnet" "dmz" {
   vpc_id                  = "${aws_vpc.main.id}"
   cidr_block              = "${cidrsubnet(aws_vpc.main.cidr_block, 8, 1)}"
@@ -186,7 +186,7 @@ resource "aws_subnet" "dmz" {
 
 Additionally we define gateway for internet connectivty, and define the necessary route for it.
 
-```
+```hcl
 resource "aws_internet_gateway" "internet" {
   vpc_id = "${aws_vpc.main.id}"
 
@@ -218,7 +218,7 @@ resource "aws_route_table_association" "dmz_internet" {
 
 In order to access the hosts created in our subnets, we need to define security group and associate them to the each host. First we define the security group where we accept only incoming ssh from any host, and all outgoing traffic to any host. 
 
-```
+```hcl
 resource "aws_security_group" "allow_ssh" {
   name        = "allow_ssh"
   description = "Allow inbound ssh traffic, and all outbound traffic"
@@ -250,7 +250,7 @@ Finally we are ready to define the actual hosts. At this point we can refer to o
 
 In this example we also allocate specific private IP address for the host. AWS reserves couple of first IP addresses for each cidr block for internal use, so we start the numbering from `.10`.
 
-```
+```hcl
 resource "aws_instance" "bastion" {
   count                  = 1
   ami                    = "${data.aws_ami.rhel75.image_id}"
@@ -268,7 +268,7 @@ resource "aws_instance" "bastion" {
 
 The app hosts are almost identical, we define to have three of them and create them of course in their respective subnet.
 
-```
+```hcl
 resource "aws_instance" "app" {
   count         = 3
   ami           = "${data.aws_ami.rhel75.image_id}"
@@ -288,7 +288,7 @@ resource "aws_instance" "app" {
 
 Finally, we can look what to provide the information about built infrastructure to next steps (e.g. ansible). In this example we create simple ansible inventory file by using `template_file` date source, and dummy `null_resource` resource to call the `local-exec` provisioner. 
 
-```
+```hcl
 data "template_file" "ansible_hosts" {
   template          = "${file("ansible-inventory.tpl")}"
   vars {
@@ -308,7 +308,7 @@ This will create `../ansible_inventory.properties` file that contains public ip 
 
 The more direct approach is to define `output` values for terraform.
 
-```
+```hcl
 output "bastion_ip" {
     value = "${aws_instance.bastion.public_ip}"
 }
