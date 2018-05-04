@@ -93,8 +93,7 @@ You're ready to connect to your infrastructure. The RHEL Amazon Machine Image ha
 
 
 ```
-$ cd ../
-$ ssh -i keys/aws-deployer -l ec2-user $(terraform output bastion_ip)
+$ ssh -i ../keys/aws-deployer -l ec2-user $(terraform output bastion_ip)
 ```
 
 ### Destroy your infrastructure
